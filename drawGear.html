@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link href="https://fonts.cdnfonts.com/css/pt-sans-2" rel="stylesheet">
+
+    <style>
+        @import url('https://fonts.cdnfonts.com/css/pt-sans-2');
+        body{
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+        *{
+            font-family: 'PT Sans', sans-serif;
+            font-family: 'PT Sans Caption', sans-serif;
+            font-family: 'PT Sans Narrow', sans-serif;
+        }
+        .main{
+            display: flex;
+            align-items: center;
+            flex-direction: column;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            align-content: stretch;
+            height: 100%;
+        }
+        .main div{
+            display: flex;
+            justify-content: end;
+            align-items: center;
+            flex-direction: column;
+            height: 100%;
+        }
+        #svg{
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 800px;
+            height: 600px;
+        }
+        #svg svg{
+            display: flex;
+        }
+
+        .property {
+            display: flex;
+            align-items: center;
+            justify-content: end;
+            flex-direction: column;
+            width: 400px;
+            margin-bottom: 300px;
+        }
+    </style>
+</head>
+<body>
+    <div class="main">
+        <div id="svg"></div>
+        <div id="app">
+            <div class="property">
+            <label>
+                Радиус: <span v-text="radius">100</span><br>
+                <input v-model="radius" type="range" min=1 max=600 step=1>
+            </label>
+            <label>
+                Сегментов: <span v-text="segments">8</span><br>
+                <input v-model="segments" type="range" min=3 max=64 step=1>
+            </label>
+            <label>
+                Угол: <span v-text="angel">45</span><br>
+                <input v-model="angel" type="range" min=0 max=360 step=1>
+            </label>
+            </div>
+        </div>
+    </div>
+    <script src="https://maker.js.org/target/js/browser.maker.js" type="text/javascript"></script>
+    <script src="vue.js" type="text/javascript"></script>
+    <script src="treeloysMath.js" type="text/javascript"></script>
+    <script>
+        var makerjs = require('makerjs');
+        var Line = makerjs.paths.Line;
+        var Circle = makerjs.paths.Circle;
+
+
+
+        var app = new Vue({
+            el: '#app',
+            data() {
+                return {
+                    segments: 8,
+                    radius: 15,
+                    angel: 8
+                }
+            },
+            created(){
+                this.tooth()
+            },
+            watch:{
+                segments: function(val){
+                    this.tooth()
+                    return val
+                },
+                radius: function(val){
+                    this.tooth()
+                    return val
+                },
+                angel: function (val) {
+                    this.tooth()
+                    return val
+                }
+            },
+            computed:{
+                iRadius: function(){
+                  return parseInt(this.radius);
+                },
+                iSegments: function () {
+                    return parseInt(this.segments);
+                },
+                iAngel: function () {
+                    return parseInt(this.segments);
+                }
+            },
+            methods:{
+                calculateSvg: function () {
+                    let radius = this.radius;
+                    let segments = this.segments;
+                    let lastDot = radiusAngelToDots(radius, 360 / segments * (segments-1));
+                    let linesPath = [];
+                    for (let i = 0; i < segments; i++){
+                        let angelOne = 360 / segments;
+                        let newDot = radiusAngelToDots(radius, angelOne * i);
+                        linesPath.push(new makerjs.paths.Line(lastDot, newDot));
+                        lastDot = newDot;
+                    }
+                    document.querySelector("#svg").innerHTML = makerjs.exporter.toSVG(linesPath);
+
+                    this.radius = radius
+                    this.segments = segments
+                },
+                tooth: function (angel) {
+                    console.log(parseInt(this.radius))
+                    let linesPath = [];
+                    linesPath.push(new makerjs.paths.Circle([0, 0], this.iRadius));
+
+                    let dotsEnd = radiusAngelToDots(this.iRadius, this.iAngel);
+
+                    // Направляющая
+                    linesPath.push(new makerjs.paths.Line([0, 0], dotsEnd));
+                    // Касательная
+                    let tanLine = radiusAngelToDotsByPoint(dotsEnd, this.iRadius, this.iAngel-90)
+                    linesPath.push(new makerjs.paths.Line(dotsEnd, tanLine))
+
+
+                    document.querySelector("#svg").innerHTML = makerjs.exporter.toSVG(linesPath);
+                }
+            }
+        })
+
+    </script>
+</body>
+</html>
